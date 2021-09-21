@@ -1,5 +1,29 @@
 from django.contrib import admin
-from .models import Ingredient, Tag, Recipe, Follow, Favourite, Purchase
+from .models import (Ingredient, Tag, Recipe, Follow, Favourite,
+                     Purchase, IngredientAmount, User)
+
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = (
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+    )
+    search_fields = ("email",)
+    list_filter = ("username", "email", "first_name")
+    empty_value_display = "-пусто-"
+
+
+class IngredientAmountInline(admin.TabularInline):
+    model = IngredientAmount
+    extra = 1
+
+
+class TagInline(admin.TabularInline):
+    model = Recipe.tags.through
+    extra = 1
 
 
 @admin.register(Ingredient)
@@ -28,31 +52,25 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    inlines = [
+        TagInline,
+        IngredientAmountInline
+    ]
+    exclude = ("tags",)
     list_display = (
         "pk",
         "name",
         "author",
-        "ingredient_names",
-        "tag_names",
         "favourite_count",
     )
 
     def favourite_count(self, obj):
         return Favourite.objects.filter(recipe_id=obj.id).count()
-         
-
-    def ingredient_names(self, obj):
-        return list(obj.ingredient.all())
-
-    def tag_names(self, obj):
-        return list(obj.tag.all())
 
     search_fields = ("name",)
-    list_filter = ("name", "author", "tag")
+    list_filter = ("name", "author", "tags")
     empty_value_display = "-пусто-"
     favourite_count.short_description = "Количество попаданий в избранное"
-    ingredient_names.short_description = "Ингредиенты"
-    tag_names.short_description = "Теги"
 
 
 @admin.register(Follow)

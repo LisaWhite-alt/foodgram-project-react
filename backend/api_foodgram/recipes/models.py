@@ -1,30 +1,49 @@
 from colorfield.fields import ColorField
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
 from django.db import models
 
-USER = get_user_model()
+
+class User(AbstractUser):
+    email = models.EmailField(
+        max_length=254,
+        unique=True,
+        verbose_name="Электронная почта",
+    )
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        verbose_name="Логин",
+    )
+    first_name = models.CharField(
+        max_length=150,
+        verbose_name="Имя",
+    )
+    last_name = models.CharField(
+        max_length=150,
+        verbose_name="Фамилия",
+    )
+    password = models.CharField(
+        max_length=150,
+        verbose_name="Пароль",
+    )
+
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+
+    def __str__(self):
+        return self.username
 
 
 class Ingredient(models.Model):
     name = models.CharField(
         "Название ингредиента",
-        max_length=80,
-        db_index=True
+        max_length=80
     )
     measurement_unit = models.CharField(
         "Единица измерения",
         max_length=20
-    )
-    amount = models.PositiveSmallIntegerField(
-        "Количество ингредиента",
-        default=1,
-        validators=[
-            MinValueValidator(
-                1,
-                message="Минимальное количество ингредиента: 1 единица"
-            ),
-        ],
     )
 
     class Meta:
@@ -38,11 +57,11 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     name = models.CharField(
         "Название тега",
-        max_length=50,
-        db_index=True
+        max_length=50
     )
     color = ColorField(
-        default="#FF0000"
+        default="#FF0000",
+        verbose_name="Цвет"
     )
     slug = models.SlugField(
         max_length=50,
@@ -66,7 +85,7 @@ class Recipe(models.Model):
         "Текст рецепта",
     )
     image = models.ImageField(
-        upload_to="static/images",
+        upload_to="images",
         verbose_name="Изображение"
     )
     cooking_time = models.PositiveSmallIntegerField(
@@ -79,7 +98,7 @@ class Recipe(models.Model):
         ],
     )
     author = models.ForeignKey(
-        USER,
+        User,
         db_column="author",
         on_delete=models.CASCADE,
         related_name="recipes",
@@ -89,15 +108,15 @@ class Recipe(models.Model):
         "Дата публикации",
         auto_now_add=True
     )
-    ingredient = models.ManyToManyField(
+    ingredients = models.ManyToManyField(
         Ingredient,
-        related_name="ingredient",
-        verbose_name="Ингредиент",
+        through = "IngredientAmount",
+        verbose_name="Ингредиенты"
     )
-    tag = models.ManyToManyField(
+    tags = models.ManyToManyField(
         Tag,
-        related_name="tag",
-        verbose_name="Тег"
+        related_name="tags",
+        verbose_name="Теги"
     )
 
     class Meta:
@@ -109,15 +128,36 @@ class Recipe(models.Model):
         return f"Рецепт {self.name} от {self.author}"
 
 
+class IngredientAmount(models.Model):
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name="Ингредиент"
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE
+    )
+    amount = models.PositiveSmallIntegerField(
+        "Количество ингредиента",
+        validators=[
+            MinValueValidator(
+                1,
+                message="Минимальное количество ингредиента: 1 единица"
+            ),
+        ],
+    )
+
+
 class Follow(models.Model):
     user = models.ForeignKey(
-        USER,
+        User,
         on_delete=models.CASCADE,
         related_name="follower",
         verbose_name="Кто подписался"
     )
     author = models.ForeignKey(
-        USER,
+        User,
         on_delete=models.CASCADE,
         related_name="following",
         verbose_name="На кого подписались"
@@ -134,7 +174,7 @@ class Follow(models.Model):
 
 class Favourite(models.Model):
     user = models.ForeignKey(
-        USER,
+        User,
         on_delete=models.CASCADE,
         related_name="elector",
         verbose_name="Кто выбрал рецепт"
@@ -156,7 +196,7 @@ class Favourite(models.Model):
 
 class Purchase(models.Model):
     user = models.ForeignKey(
-        USER,
+        User,
         on_delete=models.CASCADE,
         related_name="buyer",
         verbose_name="Покупатель"
