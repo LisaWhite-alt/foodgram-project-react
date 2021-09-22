@@ -61,7 +61,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(source="ingredientamount_set",many=True, read_only=True)
     # is_favorited = serializers.SerializerMethodField()
     # is_in_shopping_cart = serializers.SerializerMethodField()
-    # image = Base64ImageField(represent_in_base64=True)
+    # image = Base64ImageField(max_length=None, use_url=True)
 
     class Meta:
         fields = (
@@ -88,3 +88,15 @@ class RecipeSerializer(serializers.ModelSerializer):
         return Purchase.objects.filter(
             user=self.context["request"].user, recipe=obj).exists()
 """
+
+class RecipeMinifiedSerializer(serializers.ModelSerializer):
+    # image = serializers.HyperlinkedRelatedField(many=True, view_name='recipe-detail', read_only=True)
+
+    class Meta:
+        fields = (
+            "id",
+            "name",
+            # "image",
+            "cooking_time"
+        )
+        model = Recipe
