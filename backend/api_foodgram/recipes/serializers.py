@@ -1,12 +1,12 @@
 from rest_framework import serializers
 
-from .models import Tag, Ingredient, IngredientAmount, Recipe, Follow, User, Favourite
+from .models import Tag, Ingredient, IngredientAmount, Recipe, Follow, User, Favourite, Purchase
 
 from drf_extra_fields.fields import Base64ImageField
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         fields = (
@@ -15,21 +15,16 @@ class UserSerializer(serializers.ModelSerializer):
             "username",
             "first_name",
             "last_name",
-            # "is_subscribed"
+            "is_subscribed"
         )
         model = User
-"""
-    def get_is_subscribed(self, obj):
-        if obj == self.context["request"].user:
-            return True
-        return Follow.objects.filter(user=self.context["request"].user, author=obj).exists()
 
     def get_is_subscribed(self, obj):
         user = self.context["request"].user
-        return not user.is_anonymous and Follow.objects.filter(
+        return not user.is_anonymous and (Follow.objects.filter(
             user=user, author=obj
-        ).exists()
-"""
+        ).exists() or user == obj)
+
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -44,7 +39,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientAmountListSerializer(serializers.ModelSerializer):
-    ingredient = IngredientSerializer(read_only=True)
+    ingredient = IngredientSerializer()
 
     class Meta:
         fields = (
@@ -53,9 +48,29 @@ class IngredientAmountListSerializer(serializers.ModelSerializer):
         )
         model = IngredientAmount
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        data = {
+            "id": representation["ingredient"]["id"],
+            "name": representation["ingredient"]["name"],
+            "measurement_unit": representation["ingredient"]["measurement_unit"],
+            "amount": representation["amount"]
+        }
+        return data
+
 class IngredientAmountPostSerializer(serializers.Serializer):
-    id = serializers.IntegerField(write_only=True)
-    amount = serializers.IntegerField(write_only=True)
+    id = serializers.IntegerField()
+    amount = serializers.IntegerField()
+
+    def validate_id(self, value):
+        if value < 1:
+            raise serializers.ValidationError()
+        return value
+
+    def validate_amount(self, value):
+        if value < 1:
+            raise serializers.ValidationError()
+        return value
 
 
 """
@@ -74,8 +89,8 @@ class RecipeListSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True)
     ingredients = IngredientAmountListSerializer(source="ingredientamount_set",many=True)
-    # is_favorited = serializers.SerializerMethodField()
-    # is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
     # image = Base64ImageField(max_length=None, use_url=True)
 
     class Meta:
@@ -84,14 +99,26 @@ class RecipeListSerializer(serializers.ModelSerializer):
             "tags",
             "author",
             "ingredients",
-            # "is_favorited",
-            # "is_in_shopping_cart",
+            "is_favorited",
+            "is_in_shopping_cart",
             "name",
             "image",
             "text",
             "cooking_time"
         )
         model = Recipe
+
+    def get_is_favorited(self, obj):
+        user = self.context["request"].user
+        return not user.is_anonymous and Favourite.objects.filter(
+            user=user, recipe=obj
+        ).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context["request"].user
+        return not user.is_anonymous and Purchase.objects.filter(
+            user=user, recipe=obj
+        ).exists()
 
 
 class RecipePostSerializer(serializers.Serializer):
@@ -115,35 +142,18 @@ class RecipePostSerializer(serializers.Serializer):
                     ingredient=current_ingredient
                 )
         return recipe
+    
+    def validate_cooking_time(self, value):
+        if value < 1:
+            raise serializers.ValidationError()
+        return value
 
     def to_representation(self, instance):
-        return RecipeListSerializer(instance).data
+        return RecipeListSerializer(instance, context=self.context).data
 
 
 
 """
-    def get_is_favorited(self, obj):
-        if self.context["request"].user.id == settings.ANONYMOUS_USER_ID:
-            return False
-        return Favourite.objects.filter(
-            user=self.context["request"].user, recipe=obj).exists()
-
-    def get_is_in_shopping_cart(self, obj):
-        return Purchase.objects.filter(
-            user=self.context["request"].user, recipe=obj).exists()
-
-    def get_is_favorited(self, obj):
-        user = self.context["request"].user
-        return not user.is_anonymous and Favourite.objects.filter(
-            user=user, recipe=obj
-        ).exists()
-
-    def get_is_in_shopping_cart(self, obj):
-        user = self.context["request"].user
-        return not user.is_anonymous and Purchase.objects.filter(
-            user=user, recipe=obj
-        ).exists()
-
     def update(self, instance, validated_data):
         contents = validated_data.pop('contents')
         tags = validated_data.pop('tags')
