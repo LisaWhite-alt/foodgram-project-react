@@ -1,8 +1,12 @@
-from rest_framework import filters, permissions
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from django.shortcuts import get_object_or_404
 
-from .models import Tag, Ingredient, Recipe
-from .serializers import TagSerializer, IngredientSerializer, RecipeListSerializer, RecipePostSerializer
+from rest_framework import filters, permissions, status
+from rest_framework.decorators import api_view
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from rest_framework.response import Response
+
+from .models import Tag, Ingredient, Recipe, Favourite, Purchase
+from .serializers import TagSerializer, IngredientSerializer, RecipeListSerializer, RecipePostSerializer, RecipeMinifiedSerializer
 from .pagination import RecipeSetPagination
 
 
@@ -32,3 +36,37 @@ class RecipeViewSet(ModelViewSet):
         if self.request.method in ["POST", "PUT"]:
             return RecipePostSerializer
         return RecipeListSerializer
+
+
+@api_view(['GET', 'DELETE'])
+def favorite_detail(request, *args, **kwargs):
+    recipe = get_object_or_404(Recipe, pk=kwargs.get("recipe_id"))
+    favorite = Favourite.objects.filter(user=request.user, recipe=recipe)
+    if ((request.method == "GET" and favorite.exists())
+        or (request.method == "DELETE" and not favorite.exists())):
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == "GET" and not favorite.exists():
+        Favourite.objects.create(user=request.user, recipe=recipe)
+        context = {"request": request}
+        serializer = RecipeMinifiedSerializer(recipe, context=context)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET', 'DELETE'])
+def purchase_detail(request, *args, **kwargs):
+    recipe = get_object_or_404(Recipe, pk=kwargs.get("recipe_id"))
+    purchase = Purchase.objects.filter(user=request.user, recipe=recipe)
+    if ((request.method == "GET" and purchase.exists())
+        or (request.method == "DELETE" and not purchase.exists())):
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == "GET" and not purchase.exists():
+        Purchase.objects.create(user=request.user, recipe=recipe)
+        context = {"request": request}
+        serializer = RecipeMinifiedSerializer(recipe, context=context)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        purchase.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
