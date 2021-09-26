@@ -129,6 +129,14 @@ class RecipePostSerializer(serializers.Serializer):
     text = serializers.CharField()
     cooking_time = serializers.IntegerField()
 
+    def validate_cooking_time(self, value):
+        if value < 1:
+            raise serializers.ValidationError()
+        return value
+
+    def to_representation(self, instance):
+        return RecipeListSerializer(instance, context=self.context).data
+
     def create(self, validated_data):
         ingredients = validated_data.pop("ingredients")
         tags = validated_data.pop("tags")
@@ -142,42 +150,27 @@ class RecipePostSerializer(serializers.Serializer):
                     ingredient=current_ingredient
                 )
         return recipe
-    
-    def validate_cooking_time(self, value):
-        if value < 1:
-            raise serializers.ValidationError()
-        return value
 
-    def to_representation(self, instance):
-        return RecipeListSerializer(instance, context=self.context).data
-
-
-
-"""
     def update(self, instance, validated_data):
-        contents = validated_data.pop('contents')
-        tags = validated_data.pop('tags')
-        instance.tags.set(tags)
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
+        ingredients = validated_data.pop("ingredients")
+        tags = validated_data.pop("tags")
+        instance.name = validated_data.get("name", instance.name)
+        instance.image = validated_data.get("image", instance.image)
+        instance.text = validated_data.get("text", instance.text)
         instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time
-        )
-        instance.image = validated_data.get('image', instance.image)
+            "cooking_time", instance.cooking_time)
+        instance.tags.set(tags)
         instance.save()
         instance.ingredients.clear()
-        for item in contents:
-            content = ContentSerializer(item).data
-            amount = content['amount']
-            ingredient_id = content['id']
-            ingredient = Ingredient.objects.get(pk=ingredient_id)
-            content = Content.objects.create(
-                recipe=instance,
-                ingredient=ingredient, amount=amount
-            )
-            content.save()
+        for item in ingredients:
+            current_ingredient = Ingredient.objects.get(pk=item["id"])
+            IngredientAmount.objects.create(
+                    recipe=instance,
+                    amount=item["amount"],
+                    ingredient=current_ingredient
+                )
         return instance
-"""
+
 
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
     # image = serializers.HyperlinkedRelatedField(many=True, view_name="recipe", read_only=True, lookup_field="recipe")
