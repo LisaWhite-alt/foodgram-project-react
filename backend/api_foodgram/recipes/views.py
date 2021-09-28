@@ -5,6 +5,9 @@ from rest_framework.decorators import api_view
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.response import Response
 
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .filters import RecipeFilter
 from .models import Tag, Ingredient, Recipe, Favourite, Purchase
 from .serializers import TagSerializer, IngredientSerializer, RecipeListSerializer, RecipePostSerializer, RecipeMinifiedSerializer
 from .pagination import RecipeSetPagination
@@ -25,7 +28,8 @@ class IngredientViewSet(ReadOnlyModelViewSet):
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-    pagination_class = RecipeSetPagination
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(
@@ -70,3 +74,19 @@ def purchase_detail(request, *args, **kwargs):
     else:
         purchase.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def download_shopping_cart(request):
+    recipes = Recipe.objects.filter(purchase__user=self.request.user)
+    purchase_list = []
+    for recipe in recipes:
+        for item in recipe.ingredients:
+            name = item__ingredient__name
+            measurement_unit = item__ingredient__measurement_unit
+            amount = item_amount
+            for element in purchase_list:
+                if name not in element:
+                    purchase_list.append([name, measurement_unit, amount])
+                else:
+                    element[2] += amount
+

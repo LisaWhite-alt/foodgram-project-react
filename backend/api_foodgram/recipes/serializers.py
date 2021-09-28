@@ -71,17 +71,21 @@ class IngredientAmountPostSerializer(serializers.Serializer):
         if value < 1:
             raise serializers.ValidationError()
         return value
-
-
 """
-class Base64(serializers.Field):
+class Hex2NameColor(serializers.Field):
+    # При чтении данных ничего не меняем - просто возвращаем как есть
     def to_representation(self, value):
         return value
+    # При записи код цвета конвертируется в его название
     def to_internal_value(self, data):
+        # Доверяй, но проверяй
         try:
-            data = Base64ImageField(data)
+            # Если имя цвета существует, то конвертируем код в название
+            data = webcolors.hex_to_name(data)
         except ValueError:
-            raise serializers.ValidationError("Не получается конвертировать картинку")
+            # Иначе возвращаем ошибку
+            raise serializers.ValidationError('Для этого цвета нет имени')
+        # Возвращаем данные в новом формате
         return data
 """
 
@@ -91,7 +95,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountListSerializer(source="ingredientamount_set",many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    # image = Base64ImageField(max_length=None, use_url=True)
 
     class Meta:
         fields = (
@@ -125,7 +128,7 @@ class RecipePostSerializer(serializers.Serializer):
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     ingredients = IngredientAmountPostSerializer(many=True)
     name = serializers.CharField(max_length=200)
-    image = Base64ImageField()
+    image = Base64ImageField(max_length=None, use_url=True)
     text = serializers.CharField()
     cooking_time = serializers.IntegerField()
 
@@ -173,7 +176,6 @@ class RecipePostSerializer(serializers.Serializer):
 
 
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
-    # image = serializers.HyperlinkedRelatedField(many=True, view_name="recipe", read_only=True, lookup_field="recipe")
 
     class Meta:
         fields = (

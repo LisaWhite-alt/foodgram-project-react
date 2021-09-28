@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'recipes',
     'users',
     'colorfield',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
