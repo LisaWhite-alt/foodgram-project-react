@@ -1,11 +1,11 @@
 from django.shortcuts import get_object_or_404
-
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
-from recipes.models import User, Follow
+from recipes.models import Follow, User
+
 from .serializers import SubscribeSerializer
 
 

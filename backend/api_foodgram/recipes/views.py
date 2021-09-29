@@ -1,16 +1,23 @@
+from collections import defaultdict
+from io import BytesIO
+
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-
-from rest_framework import filters, permissions, status
-from rest_framework.decorators import api_view
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
-from rest_framework.response import Response
-
 from django_filters.rest_framework import DjangoFilterBackend
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from rest_framework import filters, permissions, status
+from rest_framework.decorators import action, api_view
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from .filters import RecipeFilter
-from .models import Tag, Ingredient, Recipe, Favourite, Purchase
-from .serializers import TagSerializer, IngredientSerializer, RecipeListSerializer, RecipePostSerializer, RecipeMinifiedSerializer
+from .models import Favourite, Ingredient, Purchase, Recipe, Tag
 from .pagination import RecipeSetPagination
+from .serializers import (IngredientSerializer, RecipeListSerializer,
+                          RecipeMinifiedSerializer, RecipePostSerializer,
+                          TagSerializer)
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -40,6 +47,36 @@ class RecipeViewSet(ModelViewSet):
         if self.request.method in ["POST", "PUT"]:
             return RecipePostSerializer
         return RecipeListSerializer
+
+    @action(detail=False, url_path="download_shopping_cart")
+    def download_shopping_cart(self, request):
+        recipes = Recipe.objects.values_list(
+            "ingredientamount__ingredient__name",
+            "ingredientamount__ingredient__measurement_unit",
+            "ingredientamount__amount"
+        ).filter(purchase__user=self.request.user)
+        content = defaultdict(int)
+        for item in recipes:
+            content[item[0] + " (" + item[1] + ") - "] += item[2]
+        pdfmetrics.registerFont(TTFont('DejaVuSerif','DejaVuSerif.ttf', 'UTF-8'))
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="shopping_cart.pdf"'
+        buffer = BytesIO()
+        page = canvas.Canvas(buffer)
+        x = 50; y = 800
+        page.setFont('DejaVuSerif', size=15)
+        page.drawString(x, y, "Список покупок:")
+        page.setFont('DejaVuSerif', size=10)
+        y = y - 50
+        for item in content:
+            page.drawString(x, y, item + str(content[item]))
+            y = y - 30
+        page.showPage()
+        page.save()
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        return response
 
 
 @api_view(['GET', 'DELETE'])
@@ -75,7 +112,7 @@ def purchase_detail(request, *args, **kwargs):
         purchase.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
+"""
 def download_shopping_cart(request):
     recipes = Recipe.objects.filter(purchase__user=self.request.user)
     purchase_list = []
@@ -90,3 +127,4 @@ def download_shopping_cart(request):
                 else:
                     element[2] += amount
 
+"""

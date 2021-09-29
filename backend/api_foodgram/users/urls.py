@@ -1,6 +1,6 @@
-from django.urls import path, include
-from .views import SubscriptionsList, subscribe_detail
+from django.urls import include, path
 
+from .views import SubscriptionsList, subscribe_detail
 
 urlpatterns = [
     path("users/<int:user_id>/subscribe/", subscribe_detail, name="subscribe_detail"),
