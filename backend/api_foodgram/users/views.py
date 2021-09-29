@@ -15,7 +15,7 @@ def subscribe_detail(request, *args, **kwargs):
     subscribe = Follow.objects.filter(user=request.user, author=author)
     if (request.user == author
         or (request.method == "GET" and subscribe.exists())
-        or (request.method == "DELETE" and not subscribe.exists())):
+            or (request.method == "DELETE" and not subscribe.exists())):
         return Response(status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "GET" and not subscribe.exists():
         Follow.objects.create(user=request.user, author=author)

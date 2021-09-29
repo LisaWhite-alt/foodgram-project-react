@@ -15,7 +15,7 @@ class UserRegistrationSerializer(UserCreateSerializer):
             "first_name",
             "last_name",
             "password"
-        ) 
+        )
 
 
 class MyUserSerializer(UserSerializer):
@@ -29,13 +29,13 @@ class MyUserSerializer(UserSerializer):
             "first_name",
             "last_name",
             "is_subscribed",
-        ) 
-    
-    def get_is_subscribed(self, obj):
-        if obj == self.context["request"].user:
-            return True
-        return Follow.objects.filter(user=self.context["request"].user, author=obj).exists()
+        )
 
+    def get_is_subscribed(self, obj):
+        user = self.context["request"].user
+        return not user.is_anonymous and (Follow.objects.filter(
+            user=user, author=obj
+        ).exists() or user == obj)
 
 
 class SubscribeSerializer(MyUserSerializer):
@@ -64,5 +64,9 @@ class SubscribeSerializer(MyUserSerializer):
         except Exception:
             pass
         queryset = Recipe.objects.filter(author=obj)[:int(limit)]
-        serializer = RecipeMinifiedSerializer(queryset, context=self.context, many=True)
+        serializer = RecipeMinifiedSerializer(
+            queryset,
+            context=self.context,
+            many=True
+        )
         return serializer.data

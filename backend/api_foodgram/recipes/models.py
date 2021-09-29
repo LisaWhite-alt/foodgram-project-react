@@ -67,7 +67,7 @@ class Tag(models.Model):
         max_length=50,
         unique=True
     )
-    
+
     class Meta:
         verbose_name = "Тег"
         verbose_name_plural = "Теги"
@@ -110,7 +110,7 @@ class Recipe(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredient,
-        through = "IngredientAmount",
+        through="IngredientAmount",
         verbose_name="Ингредиенты"
     )
     tags = models.ManyToManyField(
@@ -175,7 +175,6 @@ class Follow(models.Model):
 
     def __str__(self):
         return f"Пользователь {self.user} подписан на {self.author}"
-
 
 
 class Favourite(models.Model):

@@ -1,8 +1,8 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from .models import (Favourite, Follow, Ingredient, IngredientAmount, Purchase,
-                     Recipe, Tag, User)
+from .models import (Favourite, Follow, Ingredient, IngredientAmount,
+                     Purchase, Recipe, Tag, User)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -49,14 +49,15 @@ class IngredientAmountListSerializer(serializers.ModelSerializer):
         model = IngredientAmount
 
     def to_representation(self, instance):
-        representation = super().to_representation(instance)
+        rep = super().to_representation(instance)
         data = {
-            "id": representation["ingredient"]["id"],
-            "name": representation["ingredient"]["name"],
-            "measurement_unit": representation["ingredient"]["measurement_unit"],
-            "amount": representation["amount"]
+            "id": rep["ingredient"]["id"],
+            "name": rep["ingredient"]["name"],
+            "measurement_unit": rep["ingredient"]["measurement_unit"],
+            "amount": rep["amount"]
         }
         return data
+
 
 class IngredientAmountPostSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -71,28 +72,15 @@ class IngredientAmountPostSerializer(serializers.Serializer):
         if value < 1:
             raise serializers.ValidationError()
         return value
-"""
-class Hex2NameColor(serializers.Field):
-    # При чтении данных ничего не меняем - просто возвращаем как есть
-    def to_representation(self, value):
-        return value
-    # При записи код цвета конвертируется в его название
-    def to_internal_value(self, data):
-        # Доверяй, но проверяй
-        try:
-            # Если имя цвета существует, то конвертируем код в название
-            data = webcolors.hex_to_name(data)
-        except ValueError:
-            # Иначе возвращаем ошибку
-            raise serializers.ValidationError('Для этого цвета нет имени')
-        # Возвращаем данные в новом формате
-        return data
-"""
+
 
 class RecipeListSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True)
-    ingredients = IngredientAmountListSerializer(source="ingredientamount_set",many=True)
+    ingredients = IngredientAmountListSerializer(
+        source="ingredientamount_set",
+        many=True
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -125,7 +113,10 @@ class RecipeListSerializer(serializers.ModelSerializer):
 
 
 class RecipePostSerializer(serializers.Serializer):
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
     ingredients = IngredientAmountPostSerializer(many=True)
     name = serializers.CharField(max_length=200)
     image = Base64ImageField(max_length=None, use_url=True)
@@ -148,10 +139,10 @@ class RecipePostSerializer(serializers.Serializer):
         for item in ingredients:
             current_ingredient = Ingredient.objects.get(pk=item["id"])
             IngredientAmount.objects.create(
-                    recipe=recipe,
-                    amount=item["amount"],
-                    ingredient=current_ingredient
-                )
+                recipe=recipe,
+                amount=item["amount"],
+                ingredient=current_ingredient
+            )
         return recipe
 
     def update(self, instance, validated_data):
@@ -168,10 +159,10 @@ class RecipePostSerializer(serializers.Serializer):
         for item in ingredients:
             current_ingredient = Ingredient.objects.get(pk=item["id"])
             IngredientAmount.objects.create(
-                    recipe=instance,
-                    amount=item["amount"],
-                    ingredient=current_ingredient
-                )
+                recipe=instance,
+                amount=item["amount"],
+                ingredient=current_ingredient
+            )
         return instance
 
 

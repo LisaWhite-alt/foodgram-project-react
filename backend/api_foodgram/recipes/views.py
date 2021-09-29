@@ -1,5 +1,4 @@
 from collections import defaultdict
-from io import BytesIO
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -14,7 +13,6 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from .filters import RecipeFilter
 from .models import Favourite, Ingredient, Purchase, Recipe, Tag
-from .pagination import RecipeSetPagination
 from .serializers import (IngredientSerializer, RecipeListSerializer,
                           RecipeMinifiedSerializer, RecipePostSerializer,
                           TagSerializer)
@@ -42,7 +40,7 @@ class RecipeViewSet(ModelViewSet):
         serializer.save(
             author=self.request.user
         )
-    
+
     def get_serializer_class(self):
         if self.request.method in ["POST", "PUT"]:
             return RecipePostSerializer
@@ -58,12 +56,17 @@ class RecipeViewSet(ModelViewSet):
         content = defaultdict(int)
         for item in recipes:
             content[item[0] + " (" + item[1] + ") - "] += item[2]
-        pdfmetrics.registerFont(TTFont('DejaVuSerif','DejaVuSerif.ttf', 'UTF-8'))
+        pdfmetrics.registerFont(TTFont(
+            'DejaVuSerif',
+            'DejaVuSerif.ttf',
+            'UTF-8'
+        ))
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="shopping_cart.pdf"'
-        buffer = BytesIO()
-        page = canvas.Canvas(buffer)
-        x = 50; y = 800
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_cart.pdf"')
+        page = canvas.Canvas(response)
+        x = 50
+        y = 800
         page.setFont('DejaVuSerif', size=15)
         page.drawString(x, y, "Список покупок:")
         page.setFont('DejaVuSerif', size=10)
@@ -73,9 +76,6 @@ class RecipeViewSet(ModelViewSet):
             y = y - 30
         page.showPage()
         page.save()
-        pdf = buffer.getvalue()
-        buffer.close()
-        response.write(pdf)
         return response
 
 
@@ -84,7 +84,7 @@ def favorite_detail(request, *args, **kwargs):
     recipe = get_object_or_404(Recipe, pk=kwargs.get("recipe_id"))
     favorite = Favourite.objects.filter(user=request.user, recipe=recipe)
     if ((request.method == "GET" and favorite.exists())
-        or (request.method == "DELETE" and not favorite.exists())):
+            or (request.method == "DELETE" and not favorite.exists())):
         return Response(status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "GET" and not favorite.exists():
         Favourite.objects.create(user=request.user, recipe=recipe)
@@ -101,7 +101,7 @@ def purchase_detail(request, *args, **kwargs):
     recipe = get_object_or_404(Recipe, pk=kwargs.get("recipe_id"))
     purchase = Purchase.objects.filter(user=request.user, recipe=recipe)
     if ((request.method == "GET" and purchase.exists())
-        or (request.method == "DELETE" and not purchase.exists())):
+            or (request.method == "DELETE" and not purchase.exists())):
         return Response(status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "GET" and not purchase.exists():
         Purchase.objects.create(user=request.user, recipe=recipe)
@@ -111,20 +111,3 @@ def purchase_detail(request, *args, **kwargs):
     else:
         purchase.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-"""
-def download_shopping_cart(request):
-    recipes = Recipe.objects.filter(purchase__user=self.request.user)
-    purchase_list = []
-    for recipe in recipes:
-        for item in recipe.ingredients:
-            name = item__ingredient__name
-            measurement_unit = item__ingredient__measurement_unit
-            amount = item_amount
-            for element in purchase_list:
-                if name not in element:
-                    purchase_list.append([name, measurement_unit, amount])
-                else:
-                    element[2] += amount
-
-"""
