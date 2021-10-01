@@ -1,20 +1,7 @@
 from django.contrib import admin
 
-from .models import (Favourite, Follow, Ingredient, IngredientAmount,
-                     Purchase, Recipe, Tag, User)
-
-
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = (
-        "username",
-        "email",
-        "first_name",
-        "last_name",
-    )
-    search_fields = ("email",)
-    list_filter = ("username", "email", "first_name")
-    empty_value_display = "-пусто-"
+from .models import (Favourite, Follow, Ingredient, IngredientAmount, Purchase,
+                     Recipe, Tag)
 
 
 class IngredientAmountInline(admin.TabularInline):

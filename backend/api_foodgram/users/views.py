@@ -4,8 +4,9 @@ from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
-from recipes.models import Follow, User
+from recipes.models import Follow
 
+from .models import User
 from .serializers import SubscribeSerializer
 
 

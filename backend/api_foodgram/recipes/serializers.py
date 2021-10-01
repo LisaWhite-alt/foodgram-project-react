@@ -1,8 +1,10 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from .models import (Favourite, Follow, Ingredient, IngredientAmount,
-                     Purchase, Recipe, Tag, User)
+from users.models import User
+
+from .models import (Favourite, Follow, Ingredient, IngredientAmount, Purchase,
+                     Recipe, Tag)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -63,16 +65,6 @@ class IngredientAmountPostSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     amount = serializers.IntegerField()
 
-    def validate_id(self, value):
-        if value < 1:
-            raise serializers.ValidationError()
-        return value
-
-    def validate_amount(self, value):
-        if value < 1:
-            raise serializers.ValidationError()
-        return value
-
 
 class RecipeListSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
@@ -123,26 +115,53 @@ class RecipePostSerializer(serializers.Serializer):
     text = serializers.CharField()
     cooking_time = serializers.IntegerField()
 
-    def validate_cooking_time(self, value):
-        if value < 1:
-            raise serializers.ValidationError()
-        return value
+    def validate(self, data):
+        if data['ingredients'] == []:
+            raise serializers.ValidationError(
+                "В рецепте должен быть хотя бы один ингредиент")
+        list_id = []
+        for item in data['ingredients']:
+            if item["id"] < 1:
+                raise serializers.ValidationError(
+                    "id ингредиента должно быть больше 0")
+            elif item["id"] in list_id:
+                raise serializers.ValidationError(
+                    "В рецепте не должно быть одинаковых ингредиентов")
+            elif item["amount"] < 1:
+                raise serializers.ValidationError(
+                    "Количество ингредиента должно быть больше 0")
+            list_id.append(item["id"])
+        if data['cooking_time'] < 1:
+            raise serializers.ValidationError(
+                "Время приготовления должно быть больше 0")
+        return data
 
     def to_representation(self, instance):
         return RecipeListSerializer(instance, context=self.context).data
+
+    def create_ingredient_amount(self, ingredients, value):
+        list_id = []
+        for item in ingredients:
+            if item["id"] in list_id:
+                raise serializers.ValidationError(
+                    "В рецепте не должно быть одинаковых ингредиентов")
+            list_id.append(item["id"])
+        for item in ingredients:
+            current_ingredient = Ingredient.objects.get(pk=item["id"])
+            IngredientAmount.objects.create(
+                recipe=value,
+                amount=item["amount"],
+                ingredient=current_ingredient
+            )
+            list_id.append(item["id"])
+        return value
 
     def create(self, validated_data):
         ingredients = validated_data.pop("ingredients")
         tags = validated_data.pop("tags")
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
-        for item in ingredients:
-            current_ingredient = Ingredient.objects.get(pk=item["id"])
-            IngredientAmount.objects.create(
-                recipe=recipe,
-                amount=item["amount"],
-                ingredient=current_ingredient
-            )
+        self.create_ingredient_amount(ingredients, recipe)
         return recipe
 
     def update(self, instance, validated_data):
@@ -156,13 +175,7 @@ class RecipePostSerializer(serializers.Serializer):
         instance.tags.set(tags)
         instance.save()
         instance.ingredients.clear()
-        for item in ingredients:
-            current_ingredient = Ingredient.objects.get(pk=item["id"])
-            IngredientAmount.objects.create(
-                recipe=instance,
-                amount=item["amount"],
-                ingredient=current_ingredient
-            )
+        self.create_ingredient_amount(ingredients, instance)
         return instance
 
 

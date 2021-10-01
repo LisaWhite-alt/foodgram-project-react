@@ -3,37 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
 from django.db import models
 
-
-class User(AbstractUser):
-    email = models.EmailField(
-        max_length=254,
-        unique=True,
-        verbose_name="Электронная почта",
-    )
-    username = models.CharField(
-        max_length=150,
-        unique=True,
-        verbose_name="Логин",
-    )
-    first_name = models.CharField(
-        max_length=150,
-        verbose_name="Имя",
-    )
-    last_name = models.CharField(
-        max_length=150,
-        verbose_name="Фамилия",
-    )
-    password = models.CharField(
-        max_length=150,
-        verbose_name="Пароль",
-    )
-
-    class Meta:
-        verbose_name = "Пользователь"
-        verbose_name_plural = "Пользователи"
-
-    def __str__(self):
-        return self.username
+from users.models import User
 
 
 class Ingredient(models.Model):
@@ -115,7 +85,7 @@ class Recipe(models.Model):
     )
     tags = models.ManyToManyField(
         Tag,
-        related_name="tags",
+        related_name="recipes",
         verbose_name="Теги"
     )
 
@@ -147,6 +117,10 @@ class IngredientAmount(models.Model):
             ),
         ],
     )
+
+    class Meta:
+        verbose_name = "Ингредиент и его количество"
+        verbose_name_plural = "Ингредиенты и их количества"
 
 
 class Follow(models.Model):
@@ -216,6 +190,12 @@ class Purchase(models.Model):
     class Meta:
         verbose_name = "Покупка"
         verbose_name_plural = "Покупки"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "recipe"],
+                name="unique_purchase"
+            ),
+        ]
 
     def __str__(self):
         return f"Пользователь {self.user} выбрал к покупке {self.recipe}"

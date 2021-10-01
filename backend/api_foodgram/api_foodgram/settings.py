@@ -1,9 +1,11 @@
 import os
 from datetime import timedelta
 
+from decouple import config
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = "ijxs0becy2on*^dr_4g+t_#s@ac!w4o8pv@u3z#b^4qfsj_6es"
+SECRET_KEY = config("SECRET_KEY")
 
 DEBUG = True
 
@@ -55,11 +57,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "api_foodgram.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
-    }
+DATABASES = { 
+    "default": { 
+        "ENGINE": "django.db.backends.sqlite3", 
+        "NAME": os.path.join(BASE_DIR, "db.sqlite3"), 
+    } 
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -77,7 +79,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "ru-ru"
 
 TIME_ZONE = "UTC"
 
@@ -105,7 +107,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "users.pagination.StandardResultsSetPagination"
 }
 
-AUTH_USER_MODEL = "recipes.User"
+AUTH_USER_MODEL = "users.User"
 
 DJOSER = {
     "LOGIN_FIELD": "email",
