@@ -58,11 +58,12 @@ class SubscribeSerializer(MyUserSerializer):
         return Recipe.objects.filter(author=obj).count()
 
     def get_recipes(self, obj):
-        limit = 6
         try:
             limit = self.context["request"].query_params["recipes_limit"]
-        except Exception as e:
-            print("Неверно указано количество рецептов на странице", e)
+            if limit < 1 or limit is not int:
+                raise ValueError()
+        except Exception:
+            limit = 6
         queryset = Recipe.objects.filter(author=obj)[:int(limit)]
         serializer = RecipeMinifiedSerializer(
             queryset,

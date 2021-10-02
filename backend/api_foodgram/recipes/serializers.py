@@ -116,7 +116,7 @@ class RecipePostSerializer(serializers.Serializer):
     cooking_time = serializers.IntegerField()
 
     def validate(self, data):
-        if data['ingredients'] == []:
+        if not data['ingredients']:
             raise serializers.ValidationError(
                 "В рецепте должен быть хотя бы один ингредиент")
         list_id = []
@@ -140,12 +140,6 @@ class RecipePostSerializer(serializers.Serializer):
         return RecipeListSerializer(instance, context=self.context).data
 
     def create_ingredient_amount(self, ingredients, value):
-        list_id = []
-        for item in ingredients:
-            if item["id"] in list_id:
-                raise serializers.ValidationError(
-                    "В рецепте не должно быть одинаковых ингредиентов")
-            list_id.append(item["id"])
         for item in ingredients:
             current_ingredient = Ingredient.objects.get(pk=item["id"])
             IngredientAmount.objects.create(
@@ -153,7 +147,6 @@ class RecipePostSerializer(serializers.Serializer):
                 amount=item["amount"],
                 ingredient=current_ingredient
             )
-            list_id.append(item["id"])
         return value
 
     def create(self, validated_data):

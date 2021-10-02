@@ -102,6 +102,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.env
 .venv
 env/
 venv/
@@ -132,3 +133,4 @@ dmypy.json
 
 .backend/api_foodgram/static
 .backend/api_foodgram/media
+.backend/api_foodgram/.env
