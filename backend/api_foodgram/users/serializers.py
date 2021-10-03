@@ -60,8 +60,7 @@ class SubscribeSerializer(MyUserSerializer):
     def get_recipes(self, obj):
         try:
             limit = self.context["request"].query_params["recipes_limit"]
-            if limit < 1 or limit is not int:
-                raise ValueError()
+            validate(limit)
         except Exception:
             limit = 6
         queryset = Recipe.objects.filter(author=obj)[:int(limit)]
@@ -71,3 +70,7 @@ class SubscribeSerializer(MyUserSerializer):
             many=True
         )
         return serializer.data
+
+        def validate(value):
+            if value < 1 or value is not int:
+                raise ValueError()
