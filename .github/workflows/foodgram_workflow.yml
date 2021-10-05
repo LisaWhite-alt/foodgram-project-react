@@ -44,8 +44,6 @@ jobs:
         uses: docker/build-push-action@v2 
         with:
           context: ./backend
-          version: latest
-          file: backend/dockerfile
           push: true
           tags: lisawhitealt/foodgram_backend:latest
 
