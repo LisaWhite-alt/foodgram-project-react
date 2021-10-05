@@ -6,12 +6,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from rest_framework import permissions, status
+from rest_framework import filters, permissions, status
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from .filters import IngredientFilterSet, RecipeFilterSet
+from .filters import IngredientFilter, RecipeFilter
 from .models import Favourite, Ingredient, Purchase, Recipe, Tag
 from .serializers import (IngredientSerializer, RecipeListSerializer,
                           RecipeMinifiedSerializer, RecipePostSerializer,
@@ -21,21 +21,22 @@ from .serializers import (IngredientSerializer, RecipeListSerializer,
 class TagViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filter_class = IngredientFilterSet
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientFilter
+    pagination_class = None
 
 
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-    filter_backends = (DjangoFilterBackend,)
-    filter_class = RecipeFilterSet
-    filterset_fields = ("author", )
+    # permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(
