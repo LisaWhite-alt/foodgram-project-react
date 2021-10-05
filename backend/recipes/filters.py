@@ -7,12 +7,12 @@ from .models import Recipe
 class RecipeFilter(FilterSet):
 
     is_favorited = filters.ModelChoiceFilter(
-        lookup_expr='isnull',
+        lookup_expr='icontains',
         queryset=Recipe.objects.all(),
         method='filter_is_favorited',
     )
     is_in_shopping_cart = filters.ModelChoiceFilter(
-        lookup_expr='isnull',
+        lookup_expr='icontains',
         queryset=Recipe.objects.all(),
         method='filter_is_in_shopping_cart',
     )
