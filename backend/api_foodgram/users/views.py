@@ -1,10 +1,9 @@
 from django.shortcuts import get_object_or_404
+from recipes.models import Follow
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
-
-from recipes.models import Follow
 
 from .models import User
 from .serializers import SubscribeSerializer
@@ -32,5 +31,4 @@ class SubscriptionsList(ListAPIView):
     serializer_class = SubscribeSerializer
 
     def get_queryset(self):
-        queryset = User.objects.filter(following__user=self.request.user)
-        return queryset
+        return User.objects.filter(following__user=self.request.user)

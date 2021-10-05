@@ -1,8 +1,7 @@
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from rest_framework import serializers
-
 from recipes.models import Follow, Recipe
 from recipes.serializers import RecipeMinifiedSerializer
+from rest_framework import serializers
 
 
 class UserRegistrationSerializer(UserCreateSerializer):
@@ -57,10 +56,15 @@ class SubscribeSerializer(MyUserSerializer):
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
 
+    def validate(self, value):
+        if value < 1 or value is not int:
+            raise ValueError()
+        return value
+
     def get_recipes(self, obj):
         try:
             limit = self.context["request"].query_params["recipes_limit"]
-            validate(limit)
+            self.validate(limit)
         except Exception:
             limit = 6
         queryset = Recipe.objects.filter(author=obj)[:int(limit)]
@@ -70,7 +74,3 @@ class SubscribeSerializer(MyUserSerializer):
             many=True
         )
         return serializer.data
-
-        def validate(value):
-            if value < 1 or value is not int:
-                raise ValueError()

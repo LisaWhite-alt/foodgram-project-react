@@ -1,6 +1,5 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-
 from users.models import User
 
 from .models import (Favourite, Follow, Ingredient, IngredientAmount, Purchase,
@@ -52,13 +51,12 @@ class IngredientAmountListSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
-        data = {
+        return {
             "id": rep["ingredient"]["id"],
             "name": rep["ingredient"]["name"],
             "measurement_unit": rep["ingredient"]["measurement_unit"],
             "amount": rep["amount"]
         }
-        return data
 
 
 class IngredientAmountPostSerializer(serializers.Serializer):
