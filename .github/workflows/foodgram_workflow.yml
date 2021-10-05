@@ -23,7 +23,7 @@ jobs:
       run: |
         python -m flake8
 
-  build_and_push_to_docker_hub:
+  build_backend:
     name: Push backend image to Docker Hub
     runs-on: ubuntu-latest
     defaults:
@@ -49,7 +49,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build_and_push_to_docker_hub
+    needs: build_backend
     steps:
       - name: executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
@@ -62,7 +62,7 @@ jobs:
           script: |
             sudo docker pull lisawhitealt/foodgram_backend
             sudo docker-compose stop
-            sudo docker system prune -f
+            sudo docker-compose rm -f
             sudo docker system prune -f --volumes
             rm .env -rf
             touch .env
