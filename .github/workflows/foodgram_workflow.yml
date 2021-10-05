@@ -16,7 +16,6 @@ jobs:
     - name: Install dependencies
       run: |
         cd backend
-        cd api_foodgram
         python -m pip install --upgrade pip 
         pip install flake8 pep8-naming flake8-broken-line flake8-return flake8-isort
         pip install -r requirements.txt 
@@ -29,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./backend/api_foodgram
+        working-directory: ./backend
     needs: tests
     steps:
       - name: Check out the repo
@@ -44,6 +43,9 @@ jobs:
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2 
         with:
+          context: ./backend
+          version: latest
+          file: backend/dockerfile
           push: true
           tags: lisawhitealt/foodgram_backend:latest
 
