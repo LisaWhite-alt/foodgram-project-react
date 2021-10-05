@@ -7,7 +7,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = config("SECRET_KEY")
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -57,11 +57,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "api_foodgram.wsgi.application"
 
-DATABASES = { 
-    "default": { 
-        "ENGINE": "django.db.backends.sqlite3", 
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"), 
-    } 
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("DB_NAME"),
+        "USER": config("POSTGRES_USER"),
+        "PASSWORD": config("POSTGRES_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT"),
+        "TEST": {
+            "NAME": "mytestdatabase",
+        },
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -87,7 +94,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 STATIC_URL = "/static/"
