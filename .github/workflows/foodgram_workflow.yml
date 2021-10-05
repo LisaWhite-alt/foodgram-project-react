@@ -62,9 +62,7 @@ jobs:
           script: |
             sudo docker pull lisawhitealt/foodgram_backend
             sudo docker-compose stop
-            sudo docker-compose rm -f
-            sudo docker system prune -f --volumes
-            rm .env -rf
+            sudo docker-compose rm backend
             touch .env
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
             echo DB_NAME=${{ secrets.DB_NAME }} >> .env
