@@ -11,7 +11,7 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from .filters import RecipeFilter
+from .filters import IngredientFilterSet, RecipeFilterSet
 from .models import Favourite, Ingredient, Purchase, Recipe, Tag
 from .serializers import (IngredientSerializer, RecipeListSerializer,
                           RecipeMinifiedSerializer, RecipePostSerializer,
@@ -26,15 +26,16 @@ class TagViewSet(ReadOnlyModelViewSet):
 class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ("^name",)
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = IngredientFilterSet
 
 
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
-    filter_class = RecipeFilter
+    filter_class = RecipeFilterSet
+    filterset_fields = ("author", )
 
     def perform_create(self, serializer):
         serializer.save(

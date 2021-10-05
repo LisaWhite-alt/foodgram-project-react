@@ -60,8 +60,8 @@ class IngredientAmountListSerializer(serializers.ModelSerializer):
 
 
 class IngredientAmountPostSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    amount = serializers.IntegerField()
+    id = serializers.IntegerField(required=True)
+    amount = serializers.IntegerField(required=True)
 
 
 class RecipeListSerializer(serializers.ModelSerializer):
@@ -105,13 +105,14 @@ class RecipeListSerializer(serializers.ModelSerializer):
 class RecipePostSerializer(serializers.Serializer):
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
-        many=True
+        many=True,
+        required=True
     )
-    ingredients = IngredientAmountPostSerializer(many=True)
-    name = serializers.CharField(max_length=200)
-    image = Base64ImageField(max_length=None, use_url=True)
-    text = serializers.CharField()
-    cooking_time = serializers.IntegerField()
+    ingredients = IngredientAmountPostSerializer(many=True, required=True)
+    name = serializers.CharField(max_length=200, required=True)
+    image = Base64ImageField(max_length=None, use_url=True, required=True)
+    text = serializers.CharField(required=True)
+    cooking_time = serializers.IntegerField(required=True)
 
     def validate(self, data):
         if not data['ingredients']:
@@ -145,7 +146,6 @@ class RecipePostSerializer(serializers.Serializer):
                 amount=item["amount"],
                 ingredient=current_ingredient
             )
-        return value
 
     def create(self, validated_data):
         ingredients = validated_data.pop("ingredients")
