@@ -30,7 +30,7 @@ class RecipeFilter(FilterSet):
         return queryset.filter(purchase__user=self.request.user)
 
 
-class IngredientFilter(filters.FilterSet):
+class IngredientFilter(FilterSet):
     name = filters.CharFilter(field_name="name", lookup_expr="icontains")
 
     class Meta:
