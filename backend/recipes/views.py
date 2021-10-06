@@ -78,6 +78,7 @@ class RecipeViewSet(ModelViewSet):
             y = y - 30
         page.showPage()
         page.save()
+        Purchase.objects.filter(user=self.request.user).delete()
         return response
 
 
