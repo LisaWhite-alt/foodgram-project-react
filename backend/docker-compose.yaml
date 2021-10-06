@@ -9,7 +9,7 @@ services:
       - ./.env
 
   backend:
-    image: lisawhitealt/foodgram_backend:v8.10.2021
+    image: lisawhitealt/foodgram_backend
     restart: always
     volumes:
       - static_value:/code/static/
