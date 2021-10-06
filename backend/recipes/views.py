@@ -43,7 +43,7 @@ class RecipeViewSet(ModelViewSet):
         )
 
     def get_serializer_class(self):
-        if self.request.method in ["POST", "PUT"]:
+        if self.request.method in ["POST", "PUT", "PATCH"]:
             return RecipePostSerializer
         return RecipeListSerializer
 

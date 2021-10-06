@@ -156,19 +156,13 @@ class RecipePostSerializer(serializers.Serializer):
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients = validated_data.pop("ingredients") if validated_data.get(
-            "ingredients") else instance.ingredients
-        tags = validated_data.pop("tags") if validated_data.get(
-            "tags") else instance.tags
-        instance.name = validated_data["name"] if validated_data.get(
-            "name") else instance.name
-        instance.image = validated_data["image"] if validated_data.get(
-            "image") else instance.image
-        instance.text = validated_data["text"] if validated_data.get(
-            "text") else instance.text
-        instance.cooking_time = (validated_data["cooking_time"]
-                                 if validated_data.get("cooking_time")
-                                 else instance.cooking_time)
+        ingredients = validated_data.pop("ingredients")
+        tags = validated_data.pop("tags")
+        instance.name = validated_data.get("name", instance.name)
+        instance.image = validated_data.get("image", instance.image)
+        instance.text = validated_data.get("text", instance.text)
+        instance.cooking_time = validated_data.get(
+            "cooking_time", instance.cooking_time)
         instance.tags.set(tags)
         instance.save()
         instance.ingredients.clear()
